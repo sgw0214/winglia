@@ -83,6 +83,10 @@ function showWorkspace() {
   workspace.hidden = false;
 }
 
+function sameId(left, right) {
+  return String(left) === String(right);
+}
+
 function updateCounts() {
   counts.total.textContent = state.applications.length;
   counts.new.textContent = state.applications.filter((item) => item.status === "new").length;
@@ -108,7 +112,7 @@ function renderList() {
   listStatus.textContent = `${state.applications.length}건을 표시합니다.`;
   applicationList.innerHTML = state.applications
     .map((item) => {
-      const active = item.id === state.selectedId ? " is-active" : "";
+      const active = sameId(item.id, state.selectedId) ? " is-active" : "";
       return `
         <button class="application-row${active}" type="button" data-id="${item.id}">
           <div>
@@ -126,7 +130,7 @@ function renderList() {
     })
     .join("");
 
-  if (!state.selectedId || !state.applications.some((item) => item.id === state.selectedId)) {
+  if (!state.selectedId || !state.applications.some((item) => sameId(item.id, state.selectedId))) {
     state.selectedId = state.applications[0].id;
   }
 
@@ -134,7 +138,7 @@ function renderList() {
 }
 
 function renderDetail() {
-  const item = state.applications.find((application) => application.id === state.selectedId);
+  const item = state.applications.find((application) => sameId(application.id, state.selectedId));
   if (!item) return;
   const mailtoHref = buildMailtoHref(item);
 
@@ -252,7 +256,7 @@ loginForm.addEventListener("submit", async (event) => {
 applicationList.addEventListener("click", (event) => {
   const row = event.target.closest("[data-id]");
   if (!row) return;
-  state.selectedId = Number(row.dataset.id);
+  state.selectedId = row.dataset.id;
   renderList();
 });
 
@@ -280,7 +284,7 @@ detailPane.addEventListener("submit", async (event) => {
       }),
     });
     state.applications = state.applications.map((item) =>
-      item.id === result.application.id ? result.application : item
+      sameId(item.id, result.application.id) ? result.application : item
     );
     status.className = "save-status success";
     status.textContent = "저장되었습니다.";
@@ -297,8 +301,8 @@ detailPane.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-delete-application]");
   if (!button) return;
 
-  const id = Number(button.dataset.id);
-  const item = state.applications.find((application) => application.id === id);
+  const id = button.dataset.id;
+  const item = state.applications.find((application) => sameId(application.id, id));
   if (!item) return;
 
   const label = item.organization || item.name;
@@ -312,7 +316,7 @@ detailPane.addEventListener("click", async (event) => {
 
   try {
     await api(`/api/admin/applications?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-    state.applications = state.applications.filter((application) => application.id !== id);
+    state.applications = state.applications.filter((application) => !sameId(application.id, id));
     state.selectedId = state.applications[0]?.id || null;
     renderList();
   } catch (error) {

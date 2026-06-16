@@ -15,7 +15,7 @@ function parseQuery(req) {
 
 function normalizeRow(row) {
   return {
-    id: row.id,
+    id: Number(row.id),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     status: row.status,
